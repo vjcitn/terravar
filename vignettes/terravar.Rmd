@@ -1,0 +1,89 @@
+---
+title: "terravar: exploring human genetic variants with Terra"
+author: "Vincent J. Carey, stvjc at channing.harvard.edu"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{terravar: exploring human genetic variants with Terra}
+  %\VignetteEncoding{UTF-8}
+output:
+  BiocStyle::html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: united
+    toc: yes
+---
+
+```{r setup, echo=FALSE, results="hide"}
+suppressPackageStartupMessages({
+library(ldblock)
+library(GenomicFiles)
+library(VariantAnnotation)
+library(snpStats)
+})
+```
+
+# Overview
+
+The Terra system is a cloud-based environment for genomic data analysis.
+A number of examples of analysis of reference data are collected in
+a notebook library.  The terravar package can be used in terra.  terravar
+was conceived as a vehicle for comparing diverse approaches to
+analyzing genetic variants in cohorts.
+
+# Population stratification in 1000 genomes
+
+In this section we will acquire a modest collection of SNP
+calls from chr17, and project the genotype configurations via principal
+components to expose population substructure.
+
+## Create references to the AWS VCF repository
+
+Bioconductor's `r Biocpkg("ldblock")` package includes
+utilities for working with collections of VCF, typically
+decomposed by chromosome.
+
+```{r ini, cache=TRUE}
+library(ldblock)
+library(GenomicFiles)
+library(VariantAnnotation)
+#st = stack1kg()
+#st
+ebi_1kg = function (chrnum, wrap = function(x) TabixFile(x), tmpl = NULL, 
+    dropchr = TRUE) 
+{
+    if (dropchr) 
+        chrnum = gsub("chr", "", chrnum)
+    template = "http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/ALL.chr%s.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz"
+    wrap(sprintf(template, chrnum))
+}
+
+```
+
+## Read a slice of VCF corresponding to a region of chr17
+
+We have created `st` to hold references to 1000 genomes VCF in
+Amazon S3.  We will interrogate these tabix-indexed VCF via HTTP.
+
+```{r getgt}
+sp = ScanVcfParam(geno="GT", 
+    which=GRanges("17", IRanges(32e6,32.05e6)))
+myread = readVcf(ebi_1kg("17"), param=sp) 
+myread
+```
+
+## Transform the VCF content to rare allele counts
+
+We use David Clayton's `r Biocpkg("snpStats") package
+tools for compact representation of (possibly uncertain)
+genotype calls.  This enables us to filter to SNP with MAF exceeding
+a given threshold.
+
+```{r docla, cache=TRUE}
+library(snpStats)
+mymat = genotypeToSnpMatrix(myread)
+cs = col.summary(mymat[[1]])
+sum(cs[,"MAF"]>.1, na.rm=TRUE)
+```
+
+
