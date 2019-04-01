@@ -4,10 +4,11 @@ Description: Explore human genetic variation data in Terra.
 Version: 0.0.0
 Author: Vince Carey
 Suggests: knitr
-Depends: R (>= 3.5), bigrquery
+Depends: R (>= 3.5), bigrquery, ldblock
 Maintainer: VJ Carey <stvjc@channing.harvard.edu>
 License: Artistic-2.0
 LazyLoad: yes
+LazyData: yes
 biocViews: variants
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
