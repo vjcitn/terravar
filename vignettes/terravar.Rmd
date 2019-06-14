@@ -111,5 +111,17 @@ newdf = data.frame(pp$x[,1:4], pop=geog_1kg[rownames(pp$x), "Population"],
 ggplot(newdf, aes(x=PC1, y=PC2, colour=superpop)) + geom_point()
 ```
 
+## Use BiocSklearn for faster approximate PCA
+
+```{r nnn}
+library(BiocSklearn)
+pp2 = getTransformed(skIncrPCA(cmat))
+rownames(pp2) = rownames(pp$x)
+colnames(pp2) = paste0("PC", 1:ncol(pp2))
+rownames(geog_1kg) = geog_1kg[,1]
+newdf2 = data.frame(pp2[,1:4], pop=geog_1kg[rownames(pp2), "Population"],
+    superpop = geog_1kg[rownames(pp2), "superpop"])
+ggplot(newdf2, aes(x=PC1, y=PC2, colour=superpop)) + geom_point()
+```
 
 
